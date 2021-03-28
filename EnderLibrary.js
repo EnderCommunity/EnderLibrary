@@ -1,7 +1,7 @@
+/* EnderLibrary v0.0.1 */
 (function(global, factory) {
     "use strict";
     if (typeof module === "object" && typeof module.exports === "object") {
-        // e.g. var o = require("enderlibrary")(window);
         module.exports = global.document ?
             factory(global, true) :
             function(w) {
@@ -23,6 +23,7 @@
                 warn: true,
                 normal: true
             },
+            resources: false, //exp
             ResourceRequest: true
         }
     }
@@ -88,32 +89,78 @@
             } else {
                 envi.message.error("The isSecure() function requires a valid callback function to be passed!", "Input");
             }
-        },
-        cookies: {
-            set: function(cname, cvalue, exdays) {
-                var d = new Date();
-                d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
-                document.cookie = `${cname}=${cvalue};expires=${d.toUTCString()};path=/`;
-            },
-            get: function(cname) {
-                cname = cname + "=";
-                var ca = decodeURIComponent(document.cookie).split(';');
-                for (var i = 0; i < ca.length; i++) {
-                    var c = ca[i];
-                    while (c.charAt(0) == ' ') {
-                        c = c.substring(1);
-                    }
-                    if (c.indexOf(cname) == 0)
-                        return c.substring(cname.length, c.length);
-                }
-                return undefined;
-            },
-            remove: function(cname) {
-                var d = new Date();
-                d.setTime(d.getTime() - 31449600000);
-                document.cookie = `${cname}=0;expires=${d.toUTCString()};path=/`;
-            }
         }
+    };
+
+    window.document.cookies = {
+        set: function(cname, cvalue, exdays) {
+            var d = new Date();
+            d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
+            document.cookie = `${cname}=${cvalue};expires=${d.toUTCString()};path=/`;
+        },
+        get: function(cname) {
+            cname = cname + "=";
+            var ca = decodeURIComponent(document.cookie).split(';');
+            for (var i = 0; i < ca.length; i++) {
+                var c = ca[i];
+                while (c.charAt(0) == ' ') {
+                    c = c.substring(1);
+                }
+                if (c.indexOf(cname) == 0)
+                    return c.substring(cname.length, c.length);
+            }
+            return undefined;
+        },
+        remove: function(cname) {
+            var d = new Date();
+            d.setTime(d.getTime() - 31449600000);
+            document.cookie = `${cname}=0;expires=${d.toUTCString()};path=/`;
+        }
+    };
+
+    window.document.parameters = {
+        get: function(name = "*", link = window.location.href) {
+            var params = {},
+                query = (new URL(link)).search.substring(1).split('&');
+            for (var i = 0; i < query.length; i++) {
+                var pair = query[i].split('=');
+                if (name == "*" && pair[0] != "") {
+                    params[pair[0]] = decodeURIComponent(pair[1]);
+                } else if (pair[0] == name) {
+                    params[pair[0]] = decodeURIComponent(pair[1]);
+                }
+                delete pair;
+            }
+
+            return (name == "*") ? params : params[name];
+
+            //https://gomakethings.com/getting-all-query-string-values-from-a-url-with-vanilla-js/
+        }
+    };
+
+    window.document.createElementTemplate = function(obj) {
+        return new ElementTemplate(obj);
+    };
+
+    //_EnderSettings
+    //<resource>
+    class ResourceElement extends HTMLElement {
+        set src(link) {
+            this.setAttribute("src", link);
+        }
+        get src() {
+            return this.getAttribute("src");
+        }
+        constructor() {
+            super();
+            console.log("test");
+        }
+    }
+
+    customElements.define('document-resource', ResourceElement);
+
+    document.resources = {
+        //
     };
 
     /*document.contentSecurityPolicy = {
@@ -144,6 +191,27 @@
     };*/
 
     //[START] Defined the Objects
+    function ElementTemplate(obj) {
+        if (obj.tag != undefined && obj.tag.replace(/\s/g, "") != "") {
+            this.tag = obj.tag.replace(/\s/g, "");
+            obj.tag = "@@(rule)(--ignore-attr)";
+            this.temp = obj;
+        } else {
+            envi.message.error("The ElementTemplate object requires a tag to work!", "Input");
+        }
+    }
+
+    ElementTemplate.prototype.createElement = function() {
+        var temp = document.createElement(this.tag);
+        for (var attr in this.temp) {
+            if (attr != "@@(rule)(--ignore-attr)" && attr != "_content")
+                temp.setAttribute(attr, this.temp[attr]);
+            else if (attr == "_content")
+                temp.innerHTML = this.temp[attr];
+        }
+        return temp;
+    };
+
     function ResourceRequest(url, settings) {
         if (_EnderSettings.ResourceRequest == true) {
             this.isSet = true;
@@ -177,7 +245,9 @@
             envi.message.error("<element>.destroy() can't be used on the Document Element (<html>)!", "Exception");
     };
     HTMLElement.prototype.insertElement = function(element, isFirst = false) {
-        if (typeof element.length !== "number") {
+        if (element == undefined) {
+            envi.message.error("The element argument is missing!", "Input");
+        } else if (typeof element.length !== "number") {
             !isFirst ? this.appendChild(element) : this.insertBefore(element, this.firstChild);
         } else {
             element.reverse();
