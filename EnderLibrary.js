@@ -204,7 +204,7 @@
     ElementTemplate.prototype.createElement = function() {
         var temp = document.createElement(this.tag);
         for (var attr in this.temp) {
-            if (attr != "@@(rule)(--ignore-attr)" && attr != "_content")
+            if (this.temp[attr] != "@@(rule)(--ignore-attr)" && attr != "_content")
                 temp.setAttribute(attr, this.temp[attr]);
             else if (attr == "_content")
                 temp.innerHTML = this.temp[attr];
