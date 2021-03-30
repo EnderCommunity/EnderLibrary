@@ -24,18 +24,25 @@
                 normal: true
             },
             resources: false, //exp
-            ResourceRequest: true
+            resourceRequest: true
         }
     }
     window.SettingsObject = SettingsObject;
     var locked = false,
         _callback = undefined,
         _EnderSettings = new SettingsObject().settings;
+    const dynamicVariables = {
+        originalURL: window.location.href,
+        originalPathname: window.location.pathname,
+        originalHash: window.location.hash,
+        originalSearch: window.location.search,
+        protocol: "not-dynamic"
+    };
     const envi = {
         message: {
             error: function(message, type) {
                 if (_EnderSettings.message.all && _EnderSettings.message.error)
-                    console.error(`%c[EnderLibrary] Error (${type}):`, 'font-weight: 900;', message);
+                    console.error(`%c[EnderLibrary] Error (${type}):`, 'font-weight: 900;', message); //Change this to an Error object
             },
             warn: function(message, type) {
                 if (_EnderSettings.message.all && _EnderSettings.message.warn)
@@ -45,6 +52,19 @@
                 if (_EnderSettings.message.all && _EnderSettings.message.normal)
                     console.log(`%c[EnderLibrary] Message (${type}):`, 'font-weight: 900;', message);
             }
+        },
+        events: {
+            "loading-start": [],
+            "loading-end": [],
+            "protocol-change": [],
+            "loading-failed": [],
+            "content-loaded": [],
+            "content-inserted": []
+        },
+        fireEvent(event, ...args) {
+            forEach(envi.events[event], function(callback) {
+                callback.apply(null, args);
+            });
         }
     };
 
@@ -76,7 +96,7 @@
                 envi.message.error("The request to change the settings has been rejected, EnderLibrary is in lock-mode!", "Security - Fatal");
             }
         },
-        isPageSecure: function(callback) { //callback(result, score);
+        isPageSecure: function(callback) { //callback(result, score); NOT READY
             //Do a security check!
             //The `result` variable can be set to true/false
             //The `score` variable shows how many tests did the browser/website pass
@@ -92,6 +112,239 @@
         }
     };
 
+    window.forEach = function(parent, callback) {
+        if (parent.constructor === ({}).constructor)
+            for (var i in parent)
+                callback(i);
+        else
+            for (var i = 0; i < parent.length; i++)
+                callback(parent[i]);
+    };
+
+    var loadDynamically = function(url, replace = false) {
+            envi.fireEvent("loading-start");
+            if (url.indexOf(window.location.origin) + url.indexOf("http:") + url.indexOf("https:") <= -2 || (new URL(url)).origin == window.location.origin) {
+                changePageContent(url, function() {
+                    try {
+                        window.history[replace ? "replaceState" : "pushState"]({}, "", (url.indexOf("http") < 0) ? url + ((url.indexOf("?") + url.indexOf("#") == -2 && url[url.length - 1] != "/") ? "/" : "") : url);
+                    } catch (e) {
+                        envi.fireEvent("loading-failed", -1, e);
+                    }
+                });
+            } else {
+                window.location.href = url;
+            }
+        },
+        prevent = {
+            do: false,
+            doID: 0,
+            pDo(id) {
+                if (id == this.doID)
+                    this.do = true;
+            }
+        },
+        changePageContent = function(url, callback) {
+            prevent.filter = false;
+            prevent.insert = false;
+            prevent.doID++;
+            try {
+                const te = prevent.doID;
+                var xhr = new XMLHttpRequest();
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState === XMLHttpRequest.DONE) {
+                        var status = xhr.status;
+                        if (status === 0 || (status >= 200 && status < 400)) {
+                            callback();
+                            var content = (new DOMParser()).parseFromString(xhr.responseText, "text/html");
+                            envi.fireEvent("content-loaded", {
+                                content: content,
+                                preventInsert() {
+                                    prevent.pDo(te);
+                                },
+                                status: status
+                            });
+                            filterPageContent(content);
+                            delete xhr;
+                        } else {
+                            //Failed!
+                            envi.fireEvent("loading-failed", 0, xhr.status);
+                            delete xhr;
+                        }
+                    }
+                };
+                xhr.open('GET', ((url.indexOf("http") < 0) ? (function() {
+                    var temp = url + ((url.indexOf("?") + url.indexOf("#") == -2 && url[url.length - 1] != "/") ? "/" : "");
+                    return window.location.href + temp;
+                })() : url));
+                xhr.send();
+            } catch (e) {
+                envi.fireEvent("loading-failed", 0, e);
+            }
+            //The callback should be called only if the content loads successfully!
+        },
+        filterPageContent = function(content) {
+            //Filter the content to the default format
+            var temp = {
+                _title: content.title,
+                _attributes: {
+                    documentElement: {},
+                    body: {},
+                    head: {},
+                },
+                _undefined: []
+            };
+            try {
+                content.getElementsByName("_dynamic").toArray().forEach(function(elm) { //dynamic="[type]"
+                    var tem = elm.getAttribute("_dynamic");
+                    tem = (tem == "") ? "_undefined" : tem;
+                    if (temp[tem] == undefined)
+                        temp[tem] = [];
+                    temp[tem].push(elm.outerHTML);
+                    elm.destroy();
+                    delete tem;
+                });
+                [
+                    [content.documentElement.attributes, "documentElement"],
+                    [content.body.attributes, "body"],
+                    [content.head.attributes, "head"]
+                ].forEach(function(attrs) {
+                    forEach(attrs[0], function(te) {
+                        temp._attributes[attrs[1]][te.name] = te.textContent;
+                    });
+                });
+            } catch (e) {
+                envi.fireEvent("loading-failed", 1, e);
+            }
+            setTimeout(function() {
+                if (!prevent.do)
+                    insertPageContent(temp);
+            }, 100);
+        },
+        insertPageContent = function(content) { //Incomplete
+            throw Error("Incomplete!");
+            //Insert the content according to the default format
+            /*document.getElementsByName("_dynamic").toArray().forEach(function(elm) {
+                try {
+                    elm.destroy();
+                } catch (error) { //debug
+                    console.log(elm);
+                    throw error;
+                }
+            });*/
+            try {
+                document.title = content._title;
+                [
+                    [document.documentElement, "documentElement"],
+                    [document.body, "body"],
+                    [document.head, "head"]
+                ].forEach(function(elm) {
+                    forEach(elm[0].attributes, function(attr) {
+                        elm[0].removeAttribute(attr.name);
+                    });
+                    forEach(content._attributes[elm[1]], function(attr) {
+                        elm[0].setAttribute(attr, content._attributes[elm[1]][attr]);
+                    });
+                });
+                console.log(content);
+                //[END] Temp
+            } catch (e) {
+                envi.fireEvent("loading-failed", 2, e);
+            }
+            envi.fireEvent("loading-end");
+        };
+
+    window.onpopstate = function(event) {
+        loadDynamically(window.location.href, true);
+    };
+
+    window.location.dynamic = {
+        set protocol(value) { //The protocol of the dynamic object changes how the page works when it comes to dynamic loading
+            //The values of protocol can be "fully-dynamic", "dynamic", or "not-dynamic"
+            //The default value is "not-dynamic",
+            //This variable is interchangeable, meaning that you can change the way this website behaves when loading
+            var old = dynamicVariables.protocol;
+            value = value.replace(/\s/g, "");
+            if (value == "not-dynamic") {
+                dynamicVariables.protocol = value;
+                dynamicVariables.originalURL = window.location.href;
+                dynamicVariables.originalPathname = window.location.pathname;
+                dynamicVariables.originalHash = window.location.hash;
+                dynamicVariables.originalSearch = window.location.search;
+            } else if (value == "dynamic") {
+                dynamicVariables.protocol = value;
+                //When the value is set to dynamic, the page will always load dynamically except when
+                //there is a search change in the URL
+            } else if (value == "fully-dynamic") {
+                dynamicVariables.protocol = value;
+            } else {
+                envi.message.error("The allowed dynamic protocols are 'not-dynamic', 'semi-dynamic', and 'fully-dynamic'!", "Input");
+            }
+            if (value != old)
+                envi.fireEvent("protocol-change");
+            delete old;
+        },
+        get protocol() {
+            return dynamicVariables.protocol;
+        },
+        assign(URL) { //?
+            this.href = URL;
+        },
+        set href(value) {
+            if (this.protocol != "not-dynamic") {
+                if (this.protocol == "fully-dynamic" || ((value.indexOf("?") < 0 || value.indexOf("#") > value.indexOf("?")) ? true : ((window.location.search == "") ? false : ((window.location.search == value.substring(value.indexOf("?"), (value.indexOf("#") != -1) ? value.indexOf("#") : value.length)) ? true : false))))
+                    loadDynamically(value, false);
+                else
+                    window.location.href = value;
+            } else
+                window.location.href = value;
+        },
+        get href() {
+            return window.location.href;
+        },
+        get _href() { //The value of the original href before leaving the `not-dynamic` protocol
+            return dynamicVariables.originalURL
+        },
+        get _pathname() {
+            return dynamicVariables.originalPathname
+        }, //The value of the original pathname that this page was loaded with
+        reload() {
+            this.href = this.href;
+        },
+        replace(value) {
+            loadDynamically(value, true);
+        },
+        set search(value) {
+            if (this.protocol == "fully-dynamic") { //You still need to find a way to post to your server dynamiclly
+                if (window.location.href.indexOf("?") == -1)
+                    loadDynamically(window.location.href + "?" + value);
+                else {
+                    loadDynamically(window.location.href.substring(0, window.location.href.indexOf("?") + 1) + value);
+                }
+            } else {
+                window.location.search = value;
+            }
+        },
+        get search() {
+            return window.location.search;
+        },
+        get _search() { //The value of the original search before leaving the `not-dynamic` protocol
+            return dynamicVariables.originalSearch
+        },
+        //hash: null, //Still functional in window.location
+        get _hash() { //The value of the original hash before leaving the `not-dynamic` protocol
+            return dynamicVariables.originalHash
+        },
+        on(event, callback) {
+            if (typeof callback == "function") {
+                if (event == "loading-start" || event == "loading-end" || event == "protocol-change" || event == "loading-failed" || event == "content-loaded") {
+                    envi.events[event].push(callback);
+                } else
+                    envi.message.error(`There is no '${event}' event for the dynamic location object!`, "Event Handler");
+            } else
+                envi.message.error(`You need a valid callback function!`, "Input");
+        }
+    };
+
     window.document.cookies = {
         set: function(cname, cvalue, exdays) {
             var d = new Date();
@@ -100,16 +353,15 @@
         },
         get: function(cname) {
             cname = cname + "=";
-            var ca = decodeURIComponent(document.cookie).split(';');
-            for (var i = 0; i < ca.length; i++) {
-                var c = ca[i];
+            var r = undefined;
+            forEach(decodeURIComponent(document.cookie).split(';'), function(c) {
                 while (c.charAt(0) == ' ') {
                     c = c.substring(1);
                 }
                 if (c.indexOf(cname) == 0)
-                    return c.substring(cname.length, c.length);
-            }
-            return undefined;
+                    r = c.substring(cname.length, c.length);
+            });
+            return r;
         },
         remove: function(cname) {
             var d = new Date();
@@ -122,16 +374,14 @@
         get: function(name = "*", link = window.location.href) {
             var params = {},
                 query = (new URL(link)).search.substring(1).split('&');
-            for (var i = 0; i < query.length; i++) {
-                var pair = query[i].split('=');
+            forEach(query, function(pair) {
+                pair = pair.split('=');
                 if (name == "*" && pair[0] != "") {
                     params[pair[0]] = decodeURIComponent(pair[1]);
                 } else if (pair[0] == name) {
                     params[pair[0]] = decodeURIComponent(pair[1]);
                 }
-                delete pair;
-            }
-
+            })
             return (name == "*") ? params : params[name];
 
             //https://gomakethings.com/getting-all-query-string-values-from-a-url-with-vanilla-js/
@@ -213,7 +463,7 @@
     };
 
     function ResourceRequest(url, settings) {
-        if (_EnderSettings.ResourceRequest == true) {
+        if (_EnderSettings.resourceRequest == true) {
             this.isSet = true;
             this.url = url;
         } else {
@@ -229,7 +479,7 @@
     //[END] Defined the Objects
 
     //[START] Make the Objects global as necessary
-    window.ResourceRequest = ResourceRequest;
+    window.resourceRequest = ResourceRequest;
     //[END] Make the Objects global as necessary
 
 
