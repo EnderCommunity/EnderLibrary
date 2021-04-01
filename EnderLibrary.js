@@ -65,6 +65,14 @@
             forEach(envi.events[event], function(callback) {
                 callback.apply(null, args);
             });
+        },
+        _events: {
+            dynamicLinks: function(e) {
+                if (e.target.tagName == "A" && e.target.getAttribute("target") != "_blank") {
+                    e.preventDefault();
+                    window.location.dynamic.href = e.target.href;
+                }
+            }
         }
     };
 
@@ -154,7 +162,6 @@
                     if (xhr.readyState === XMLHttpRequest.DONE) {
                         var status = xhr.status;
                         if (status === 0 || (status >= 200 && status < 400)) {
-                            callback();
                             var content = (new DOMParser()).parseFromString(xhr.responseText, "text/html");
                             envi.fireEvent("content-loaded", {
                                 content: content,
@@ -163,7 +170,9 @@
                                 },
                                 status: status
                             });
-                            filterPageContent(content);
+                            setTimeout(function() {
+                                filterPageContent(content, callback);
+                            }, 100)
                             delete xhr;
                         } else {
                             //Failed!
@@ -182,7 +191,7 @@
             }
             //The callback should be called only if the content loads successfully!
         },
-        filterPageContent = function(content) {
+        filterPageContent = function(content, callback) {
             //Filter the content to the default format
             var temp = {
                 _title: content.title,
@@ -194,13 +203,21 @@
                 _undefined: []
             };
             try {
-                content.getElementsByName("_dynamic").toArray().forEach(function(elm) { //dynamic="[type]"
+                //The _dynamic attribute is used in the default filtering process.
+                //It can tell the library where each element belongs in the page!
+                //It will find currently existing elements in the page with the
+                //same dynamic type and replace them with the new ones! Dynamic
+                //elements, that do not have a replacment within the new page
+                //content, will be removed from the current page! Dynamic elements
+                //that have not been assigned a type will be inserted at the bottom
+                //of the <body> element!
+                content.getElementsByName("_dynamic").toArray().forEach(function(elm) { //_dynamic="[type]"
                     var tem = elm.getAttribute("_dynamic");
                     tem = (tem == "") ? "_undefined" : tem;
                     if (temp[tem] == undefined)
                         temp[tem] = [];
                     temp[tem].push(elm.outerHTML);
-                    elm.destroy();
+                    elm.destroy(); //This should prevent duplicating elements!
                     delete tem;
                 });
                 [
@@ -215,13 +232,12 @@
             } catch (e) {
                 envi.fireEvent("loading-failed", 1, e);
             }
-            setTimeout(function() {
-                if (!prevent.do)
-                    insertPageContent(temp);
-            }, 100);
+            if (!prevent.do)
+                insertPageContent(temp, callback);
+            else
+                callback();
         },
-        insertPageContent = function(content) { //Incomplete
-            throw Error("Incomplete!");
+        insertPageContent = function(content, callback) { //Incomplete
             //Insert the content according to the default format
             /*document.getElementsByName("_dynamic").toArray().forEach(function(elm) {
                 try {
@@ -233,6 +249,7 @@
             });*/
             try {
                 document.title = content._title;
+                callback();
                 [
                     [document.documentElement, "documentElement"],
                     [document.body, "body"],
@@ -258,6 +275,15 @@
     };
 
     window.location.dynamic = {
+        links: {
+            get _eventFunction() {
+                return envi._events.dynamicLinks;
+            },
+            refresh() {
+                removeEventListener('click', this._eventFunction);
+                addEventListener('click', this._eventFunction);
+            }
+        },
         set protocol(value) { //The protocol of the dynamic object changes how the page works when it comes to dynamic loading
             //The values of protocol can be "fully-dynamic", "dynamic", or "not-dynamic"
             //The default value is "not-dynamic",
@@ -282,6 +308,10 @@
             if (value != old)
                 envi.fireEvent("protocol-change");
             delete old;
+
+            removeEventListener('click', envi._events.dynamicLinks);
+            if (window.location.dynamic.protocol == "fully-dynamic")
+                addEventListener('click', envi._events.dynamicLinks);
         },
         get protocol() {
             return dynamicVariables.protocol;
