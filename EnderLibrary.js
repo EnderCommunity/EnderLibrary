@@ -203,7 +203,7 @@
                 _undefined: []
             };
             try {
-                //The _dynamic attribute is used in the default filtering process.
+                //The `_dynamic` attribute is used in the default filtering process.
                 //It can tell the library where each element belongs in the page!
                 //It will find currently existing elements in the page with the
                 //same dynamic type and replace them with the new ones! Dynamic
@@ -211,6 +211,49 @@
                 //content, will be removed from the current page! Dynamic elements
                 //that have not been assigned a type will be inserted at the bottom
                 //of the <body> element!
+                //The dynamic attribute can also use selectors to tell the library
+                //where to insert this element. In case a selector returns an empty
+                //result, it will be inserted in the bottom of the document. (Unless
+                //it's a strict one!)
+
+                //_dynamic="@@(selector)(#myElement)" ==> This means that this element
+                //will be inserted in the element with the ID "myElement". If no such
+                //element is found, it will be inserted at the bottom of the document.
+
+                //_dynamic="@@(!selector)(#myElement)" ==> This means that this element
+                //will be inserted in the element with the ID "myElement". However, this
+                //is a strict selector, meaning that the element will not be inserted
+                //into the page if not match is found for the selector!
+
+                //_dynamic="@@(selector)(.myElement)" ==> This means that this element
+                //will be inserted in the element with the class name "myElement". If no such
+                //element is found, it will be inserted at the bottom of the document.
+                //And if there is more than one matching result, it will be inserted into the
+                //bottom of the document. And if an index is specified, it will be inserted
+                //in that index (if it was present). (NOTE: if this was a strict selector, and
+                //no index was present, the element will not be inserted!)
+
+                //To specify an index, you could do this:
+                //_dynamic="@@(selector)(.myElement)[0]"
+
+                //_dynamic="@@(!selector)(.myElement)" ==> This means that this element
+                //will be inserted in the element with the class name "myElement". However
+                //, this is a strict selector, meaning that the element will not be inserted
+                //into the page if not match is found for the selector, or if there are more
+                //than matching result!
+
+                //_dynamic="@@(resource)(<type>)" ==> resource will be inserted to the page
+                //according to the type!
+                //Style resources will be inserted in the <head> element, and Scripts will
+                //be inserted at the bottom of <body>. If a dynamic resource loads an already
+                //existing resource in the page, it will not be inserted!
+
+                //_dynamic="@@(!resource)(<type>)" ==> if the resource is strict, it will
+                //replace the already loaded resource.
+
+                //Meta resources will be inserted at the top of the page! (Remeber, meta data is
+                //not important in most of the use cases, so don't just add Meta tags randomly)
+
                 content.getElementsByName("_dynamic").toArray().forEach(function(elm) { //_dynamic="[type]"
                     var tem = elm.getAttribute("_dynamic");
                     tem = (tem == "") ? "_undefined" : tem;
