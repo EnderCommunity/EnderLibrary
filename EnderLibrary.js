@@ -255,6 +255,13 @@
                 //Meta resources will be inserted at the top of the page! (Remeber, meta data is
                 //not important in most of the use cases, so don't just add Meta tags randomly)
 
+                //_dynamic="@@(!resource)(<type>) @@(rule)(unload)" ==> rules are, well, rules
+                //that the library will not break -no matter the condition-.
+                //The 'unload' rule means that the specified dynamic element will be unloaded/
+                //removed once the page content changes.
+                //The 'constant' rule means that once this dynamic element is loaded, it will
+                //never be removed, even when a strict selector is trying to remove it!
+
                 content.getElementsByName("_dynamic").toArray().forEach(function(elm) { //_dynamic="[type]"
                     var tem = elm.getAttribute("_dynamic");
                     tem = (tem == "") ? "_undefined" : tem;
