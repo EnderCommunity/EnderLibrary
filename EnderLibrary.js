@@ -168,7 +168,8 @@
                                 preventInsert() {
                                     prevent.pDo(te);
                                 },
-                                status: status
+                                status: status,
+                                refresh: window.location.dynamic.links.refresh
                             });
                             setTimeout(function() {
                                 filterPageContent(content, callback);
@@ -310,6 +311,7 @@
             } catch (e) {
                 envi.fireEvent("loading-failed", 2, e);
             }
+            window.location.dynamic.links.refresh();
             envi.fireEvent("loading-end");
         };
 
@@ -317,12 +319,15 @@
         loadDynamically(window.location.href, true);
     };
 
-    window.location.dynamic = {
+    window.location.dynamic = { //The dynamic location object is used to control stuff when the
+        //dynamic protocol is set to either 'dynamic' or 'fully-dynamic'
+        //The goal of this object is to control how the page behaves when loading sutff.
+        //It can be used as a way to "Ajax load" the page when changing the Page URL.
         links: {
             get _eventFunction() {
                 return envi._events.dynamicLinks;
             },
-            refresh() {
+            refresh() { //Update the links in the page!
                 removeEventListener('click', this._eventFunction);
                 addEventListener('click', this._eventFunction);
             }
