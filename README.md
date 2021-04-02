@@ -1,8 +1,8 @@
 # EnderLibrary
 A JavaScript library that is meant to simplify things a bit.
 
-## Documentation
-<hr>
+# Documentation
+The documentation of EnderLibrary
 
 ## The `SettingsObject()` Object
 You can use the `SettingsObject()` Object to change the current framework settings safely. You are only allowed to change the settings using this object so you can lock them whenever you want!
