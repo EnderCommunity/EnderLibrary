@@ -130,7 +130,10 @@
     };
 
     var loadDynamically = function(url, replace = false) {
-            envi.fireEvent("loading-start");
+            envi.fireEvent("loading-start", {
+                url: url,
+                isReplacement: replace
+            });
             if (url.indexOf(window.location.origin) + url.indexOf("http:") + url.indexOf("https:") <= -2 || (new URL(url)).origin == window.location.origin) {
                 changePageContent(url, function() {
                     try {
@@ -318,7 +321,8 @@
             } catch (e) {
                 envi.fireEvent("loading-failed", 2, e);
             }
-            window.location.dynamic.links.refresh();
+            if (window.location.dynamic.protocol == "fully-dynamic")
+                window.location.dynamic.links.refresh();
             envi.fireEvent("loading-end");
         };
 
@@ -431,7 +435,7 @@
     };
 
     window.document.cookies = {
-        set: function(cname, cvalue, exdays) {
+        set: function(cname, cvalue = "", exdays = 30) {
             var d = new Date();
             d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
             document.cookie = `${cname}=${cvalue};expires=${d.toUTCString()};path=/`;
@@ -529,7 +533,7 @@
     function ElementTemplate(obj) {
         if (obj.tag != undefined && obj.tag.replace(/\s/g, "") != "") {
             this.tag = obj.tag.replace(/\s/g, "");
-            obj.tag = "@@(rule)(--ignore-attr)";
+            obj.tag = "@@(rule)(ignore-attr)";
             this.temp = obj;
         } else {
             envi.message.error("The ElementTemplate object requires a tag to work!", "Input");
@@ -539,7 +543,7 @@
     ElementTemplate.prototype.createElement = function() {
         var temp = document.createElement(this.tag);
         for (var attr in this.temp) {
-            if (this.temp[attr] != "@@(rule)(--ignore-attr)" && attr != "_content")
+            if (this.temp[attr] != "@@(rule)(ignore-attr)" && attr != "_content")
                 temp.setAttribute(attr, this.temp[attr]);
             else if (attr == "_content")
                 temp.innerHTML = this.temp[attr];
@@ -627,7 +631,7 @@
     HTMLElement.prototype.enableUserInteraction = function() {
         this.style.pointerEvents = "auto";
         this.style.userSelect = "auto";
-        this.removeAttribute('draggable');
+        this.setAttribute('draggable', true);
     };
     HTMLElement.prototype.getGlobalClassList = function() {
         return new GlobalClassList(this);
@@ -696,7 +700,7 @@
     //[END] Array
 
     //[START] String
-    String.prototype.toHTML = function() {
+    String.prototype.toDOMElement = function() {
         var doc = (new DOMParser()).parseFromString(this, 'text/html');
         var elements = doc.querySelectorAll('body *');
         if (elements.length == 0) {
