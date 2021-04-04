@@ -268,3 +268,84 @@ window.location.dynamic.on('content-loaded', function(e){ //Fired when the conte
     e.refresh(); //The links refresh function (window.location.dynamic.links.refresh)
 });
 ```
+
+## The `_dynamic` Attribute **(Not Ready Yet!)**
+
+The `_dynamic` attribute is used in the default filtering process for the dynamic protocol. It can tell the library where each element belongs in the page!
+
+It will find already-existing elements in the page with the same value of the `_dynamic` attribute and replace them with the new element!
+
+Of course, websites might need to do more things other than replacing an already existing element into the page!
+
+Dynamic elements that have not been assigned a type will be inserted at the bottom of the `<body>` element!
+
+The dynamic attribute can also use selectors to tell the library where to insert this element. In case a selector returns an empty result, it will be inserted at the bottom of the document. (Unless it's a strict one!)
+
+```html
+<div _dynamic="@@(selector)(#myElement)">...</div>
+```
+
+This element will be inserted in the element with the ID "myElement". If no such element is found, it will be inserted at the bottom of the document.
+
+```html
+<div _dynamic="@@(!selector)(#myElement)">...</div>
+```
+
+This element will be inserted in the element with the ID "myElement". However, this is a strict selector, strict selector mean that this element will not be inserted into the page if not match is found!
+
+```html
+<div _dynamic="@@(selector)(.myElement)">...</div>
+```
+
+This element will be inserted in the element with the class name "myElement". If no such element is found, it will be inserted at the bottom of the document.
+And if there is more than one matching result, it will be inserted into the bottom of the document. And if an index is specified, it will be inserted in that index (if it was present). (NOTE: if this was a strict selector, and no index was present/the specified index was out of range, the element will not be inserted!)
+
+To specify an index, you could do this:
+
+```html
+<div _dynamic="@@(selector)(.myElement)[0]">...</div>
+```
+
+You can also use the resource method!
+
+```html
+<div _dynamic="@@(resource)(<type>)">...</div>
+```
+
+resource will be inserted to the page according to the type!
+`Style` resources will be inserted in the `<head>` element, and Scripts will
+be inserted at the bottom of `<body>`.
+
+If a dynamic resource loads an already existing resource in the page, it will not be inserted!
+
+```html
+<div _dynamic="@@(!resource)(<type>)">...</div>
+```
+
+If the resource is strict, it will replace the already loaded resource.
+
+Meta resources will be inserted at the top of the page! (Remember, meta data is not important in most of the use cases, so don't just add Meta tags randomly)
+
+```html
+<div _dynamic="@@(selector)(...) @@(resource)(...)">...</div>
+```
+
+Please note that you can't use the resource method with a selector method on the same element. Only the first method menthioned in the `_dynamic` attribute will be followed!
+
+```html
+<div _dynamic="...  @@(rule)(unload)">...</div>
+```
+
+Rules are, well, rules that the library will not break -no matter the condition-. The `unload` rule means that the specified dynamic element will be unloaded/removed once the page content changes.
+
+```html
+<div _dynamic="...  @@(rule)(constant)">...</div>
+```
+
+The `constant` rule means that once this dynamic element is loaded, it will never be removed! Even when a strict selector is trying to remove it!
+
+```html
+<div _dynamic="...  @@(rule)(flex)">...</div>
+```
+
+The `flex` rule means that once this dynamic element is loaded, it will be recognised as a flexible element! It will mostly behave like a normal element. But, when it gets replaced by another element, it will be saved for use later. Hhen another load attempt happens, the element that replaced this element will be replaced again by the flexible element!
