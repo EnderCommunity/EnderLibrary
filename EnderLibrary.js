@@ -128,9 +128,6 @@
             } else {
                 envi.message.error("The isSecure() function requires a valid callback function to be passed!", "Input");
             }
-        },
-        developmentFunctions: { //Remove this before release
-            parse: envi.parse
         }
     };
 
