@@ -163,6 +163,7 @@ The string between the opening and closing Parentheses is whitespace-sensitive, 
 <div _dynamic="@@(! selector)(.name)"></div> <!-- Wrong! -->
 <div _dynamic="@@( selector)(.name)"></div> <!-- Wrong! -->
 <div _dynamic="@@(!selector )(.name)"></div> <!-- Wrong! -->
+<div _dynamic="@@(!selector)(.name)"></div> <!-- Right! -->
 <div _dynamic="@@(selector)(.name)"></div> <!-- Right! -->
 ```
 
