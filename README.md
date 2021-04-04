@@ -275,9 +275,28 @@ The `_dynamic` attribute is used in the default filtering process for the dynami
 
 It will find already-existing elements in the page with the same value of the `_dynamic` attribute and replace them with the new element!
 
+```html
+<div _dynamic="topPage">...</div> <!-- The dynamic element with the value of topPage will be replaced with this element! -->
+```
+
 Of course, websites might need to do more things other than replacing an already existing element into the page!
 
 Dynamic elements that have not been assigned a type will be inserted at the bottom of the `<body>` element!
+
+The code used inside the `_dynamic` attribute follows this syntax system:
+
+```html
+<div _dynamic="@@(<method_name>)(<value>)(<additional_value>)... [@@(<...>)...]"></div>
+```
+
+The string between the opening and closing Parentheses is whitespace-sensitive, so be careful with it!
+
+```html
+<div _dynamic="@@(! selector)(.name)"></div> <!-- Wrong! -->
+<div _dynamic="@@( selector)(.name)"></div> <!-- Wrong! -->
+<div _dynamic="@@(!selector )(.name)"></div> <!-- Wrong! -->
+<div _dynamic="@@(selector)(.name)"></div> <!-- Right! -->
+```
 
 The dynamic attribute can also use selectors to tell the library where to insert this element. In case a selector returns an empty result, it will be inserted at the bottom of the document. (Unless it's a strict one!)
 

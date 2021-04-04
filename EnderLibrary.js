@@ -74,10 +74,12 @@
             }
         },
         parse: function(code) {
-            code = code.replace(/\s/g, "");
+            var isInside = false;
+            code = code.replace(/\s+|\(+|\)/g, v => (v == "(") ? (inside = true, "(") : ((v == ")") ? (inside = false, ")") : ((inside) ? " " : "")));
+            delete isInside;
             if (code.indexOf("@@") != 0)
                 throw Error("Invalid Value!");
-            code = code.split("@@")
+            code = code.split("@@");
             code.shift();
             for (var i = 0; i < code.length; i++)
                 code[i] = code[i].split(/\((.*?)\)/g).filter(v => v != "");
@@ -126,6 +128,9 @@
             } else {
                 envi.message.error("The isSecure() function requires a valid callback function to be passed!", "Input");
             }
+        },
+        developmentFunctions: { //Remove this before release
+            parse: envi.parse
         }
     };
 
