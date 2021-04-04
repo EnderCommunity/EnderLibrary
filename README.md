@@ -319,7 +319,7 @@ be inserted at the bottom of `<body>`.
 If a dynamic resource loads an already existing resource in the page, it will not be inserted!
 
 ```html
-<div _dynamic="@@(!resource)(<type>)">...</div>
+<element _dynamic="@@(!resource)(<type>)" />
 ```
 
 If the resource is strict, it will replace the already loaded resource.
@@ -327,7 +327,7 @@ If the resource is strict, it will replace the already loaded resource.
 Meta resources will be inserted at the top of the page! (Remember, meta data is not important in most of the use cases, so don't just add Meta tags randomly)
 
 ```html
-<div _dynamic="@@(selector)(...) @@(resource)(...)">...</div>
+<div _dynamic="@@(selector)(...) @@(resource)(...)">...</div> <!-- This is wrong! -->
 ```
 
 Please note that you can't use the resource method with a selector method on the same element. Only the first method menthioned in the `_dynamic` attribute will be followed!
