@@ -72,6 +72,16 @@
                     window.location.dynamic.href = e.target.href;
                 }
             }
+        },
+        parse: function(code) {
+            code = code.replace(/\s/g, "");
+            if (code.indexOf("@@") != 0)
+                throw Error("Invalid Value!");
+            code = code.split("@@")
+            code.shift();
+            for (var i = 0; i < code.length; i++)
+                code[i] = code[i].split(/\((.*?)\)/g).filter(v => v != "");
+            return code;
         }
     };
 

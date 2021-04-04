@@ -303,7 +303,7 @@ And if there is more than one matching result, it will be inserted into the bott
 To specify an index, you could do this:
 
 ```html
-<div _dynamic="@@(selector)(.myElement)[0]">...</div>
+<div _dynamic="@@(selector)(.myElement)(0)">...</div>
 ```
 
 You can also use the resource method!
