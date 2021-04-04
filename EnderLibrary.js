@@ -14,6 +14,9 @@
         factory(global);
     }
 })(typeof window !== "undefined" ? window : this, function(window, noGlobal) {
+
+    console.warn("This library is not ready for use yet! Please don't use it in your serious projects.");
+
     function SettingsObject() {
         this.settings = {
             message: {
@@ -116,6 +119,7 @@
             }
         },
         isPageSecure: function(callback) { //callback(result, score); NOT READY
+            throw Error("Incomplete!");
             //Do a security check!
             //The `result` variable can be set to true/false
             //The `score` variable shows how many tests did the browser/website pass
