@@ -32,7 +32,7 @@ The output object is the following:
 }
 ```
 
-### The Global `EnderLibrary` Object
+## The Global `EnderLibrary` Object
 
 You can use this object to communicate with the library when you need to make changes to the way it works.
 
@@ -43,6 +43,229 @@ You can use this object to communicate with the library when you need to make ch
     isPageSecure: function(callback) { ... } //callback(result, score), this function is not ready yet, it'll be used to measure how secure the page is
 }
 ```
+
+## The `dynamic` location object **(Not Ready Yet!)**
+
+You can use this object to change the loading behaviour of the page and the website! Dynamic loading is basically making it so the website never has to load the same resources all over again whenever you change the page. (You might know this kind of loading as Ajax loading)
+
+There are three protocols for the dynamic loading object:
+`"not-dynamic"`, `"dynamic"`, and `"fully-dynamic"`!
+
+The `"not-dynamic"` protocol is the default protocol used whenever you load the library! It means that dynamic loading is disabled by default.
+
+In the `"dynamic"` protocol, the page will load dynamically whenever the pathname changes - unless it contains search arguments in the URL, e.g. <https://example.com/?name=c> -. By default, it will follow the filtering process. You can prevent that by listening to the 'content-loaded' event and prevent the next step (It's not recommended that you do that, as EnderLibrary has a good enough automatic filtering system for most use cases):
+
+```js
+window.location.dynamic.on('content-loaded', function(e){ //This event is fired when the content of the targeted page is loaded (with no modifications)
+    e.preventInsert(); //This will prevent the library from inserting the content to the page
+    e.content; //You can do what you see more fitting with the content of the page!
+})
+```
+
+The `"fully-dynamic"` protocol doesn't care about the search arguments, it will always load dynamically! And links in the page itself will be automatically loaded dynamiclly when pressed, so you don't have to deal with them manually.
+
+However, you should always use the refresh function whenever you modify the DOM content of the page:
+
+```js
+window.location.dynamic.links.refresh(); //This function is applied automatically when the page content is inserted by the default loading process. But if you change the DOM content by yourself, new elements aren't effected by the current protocol unless you run this command.
+removeEventListener('click', window.location.dynamic.links._eventFunction); //If you wish to modify an element, you can use the _eventFunction variable to remove the eventListner that was set my the library!
+```
+
+You can change the protocol whenever you wish to do so, you can just change the value of the protocol variable:
+
+```js
+window.location.dynamic.protocol = "not-dynamic"; //Disable dynamic loading
+window.location.dynamic.protocol = "dynamic"; //Enable dynamic loading
+window.location.dynamic.protocol = "fully-dynamic"; //Enable full dynamic loading
+```
+
+You can change the page URL when the dynamic protocol is enabled just like this:
+
+```js
+window.location.dynamic.assign(url);
+/*or*/
+window.location.dynamic.href = url;
+
+window.location.dynamic.reload(); //You could also reload the page using this
+```
+
+If you wish to retrieve the value of the last url before switching to the dynamic protocol, you can use the `_href` variable:
+
+```js
+window.location.dynamic._href;
+window.location.dynamic._pathname;
+window.location.dynamic._search;
+window.location.dynamic._hash;
+```
+
+The search function only works with the `"fully-dynamic"` protocol:
+
+```js
+window.location.dynamic.search = "?name=value";
+window.location.hash = "hmm"; //There is no hash variable for the dynamic object, as the normal hash object is still 100% functional!
+```
+
+There are many events for the dynamic object:
+
+```js
+window.location.dynamic.on('protocol-change', function(){ //Fired when the dynamic protocol changes
+    //Your Code
+});
+window.location.dynamic.on('loading-start', function(e){ //Fired when a loading attempt is made
+    e.url; //The target URL
+    e.isReplacement; //Is this URL a replacement for the current URL history
+});
+window.location.dynamic.on('loading-end', function(){ //Fired when a loading process is finished successfully
+    //Your Code
+});
+window.location.dynamic.on('loading-failed', function(stageCode, error){ //Fired when a loading process fails
+    if(stageCode == -1){
+        //Failed at the targeting stage, probably because of a cross-domain or a security policy!
+    }else if(stageCode == 0){
+        //Failed when trying to load the page content, could be a problem with the connection!
+    }else if(stageCode == 1){
+        //Failed while trying to filter the page content!
+    }else if(stageCode == 2){
+        //Failed while trying to insert the page content!
+    }
+});
+window.location.dynamic.on('content-loaded', function(e){ //Fired when the content of the targeted page is loaded, but not yet filtered or inserted into the page!
+    e.content; //The content of hte page
+    e.preventInsert(); //A function to prevent the content from being inserted into the page
+    e.status; //The request status code
+    e.refresh(); //The links refresh function (window.location.dynamic.links.refresh)
+});
+```
+
+## The `_dynamic` Attribute **(Not Ready Yet!)**
+
+The `_dynamic` attribute is used in the default filtering process for the dynamic protocol. It can tell the library where each element belongs in the page!
+
+It will find already-existing elements in the page with the same value of the `_dynamic` attribute and replace them with the new element!
+
+```html
+<div _dynamic="topPage">...</div> <!-- The dynamic element with the value of topPage will be replaced with this element! -->
+```
+
+Of course, websites might need to do more things other than replacing an already existing element into the page!
+
+Dynamic elements that have not been assigned a type will be inserted at the bottom of the `<body>` element!
+
+The code used inside the `_dynamic` attribute follows this syntax system:
+
+```html
+<div _dynamic="@@(<method_name>)(<value>)(<additional_value>)... [@@(<...>)...]"></div>
+```
+
+The string between the opening and closing Parentheses is whitespace-sensitive, so be careful with it!
+
+```html
+<div _dynamic="@@(! selector)(.name)"></div> <!-- Wrong! -->
+<div _dynamic="@@( selector)(.name)"></div> <!-- Wrong! -->
+<div _dynamic="@@(!selector )(.name)"></div> <!-- Wrong! -->
+<div _dynamic="@@(selector)(.name)"></div> <!-- Right! -->
+```
+
+The selector method works mostly like the `document.querySelectorAll()` method. But there is an extra thing in there. You can use the `@` operator to tell the library where to put your element!
+
+```html
+<div _dynamic="@@(selector)(body @top)"></div> <!-- "Put this element in the top section of the body element!" -->
+<div _dynamic="@@(selector)(body @bottom)"></div> <!-- "Put this element in the bottom section of the body element!" -->
+<div _dynamic="@@(selector)(body @0)"></div> <!-- "Put this element before the 2nd element in the body element (index 0, meaning that it should be the first element after it's inserted, this is the same as `@top`)" -->
+<div _dynamic="@@(selector)(body @1)"></div> <!-- "Put this element before the 2nd element in the body element" -->
+<div _dynamic="@@(selector)(body @#myElement)"></div> <!-- "Put this element before the element with the id myElement" -->
+```
+
+Note that everything written after the `@` operator will be used to select where you want to insert the element!
+
+```html
+<div _dynamic="@@(selector)(body @.myElement .mine)"></div> <!-- "Put this element before the element with the class 'myElement', that has a child with the class 'mine'!" If no element -a one that has the class 'myElement' and has a child with the class 'mine'- is present, this selector will fail! -->
+```
+
+```html
+<div _dynamic="topPage">...</div> <!-- The dynamic element with the value of topPage will be replaced with this element! -->
+<div _dynamic="@@(defineder)(topPage) [...]">...</div> <!-- The dynamic element with the value of topPage will be replaced with this element! -->
+```
+
+In case you wanna use a method, and keep the element defineded, you can use the `defineder` method!
+
+The dynamic attribute can also use selectors to tell the library where to insert this element. In case a selector returns an empty result, it will be inserted at the bottom of the document. (Unless it's a strict one!)
+
+```html
+<div _dynamic="@@(selector)(#myElement)">...</div>
+```
+
+This element will be inserted in the element with the ID "myElement". If no such element is found, it will be inserted at the bottom of the document.
+
+If you use a selector and a defineder in the same attribute, priority will be given to the definder method. If you want to prioritise the selector method, you need to use a strict selector:
+
+```html
+<div _dynamic="@@(defineder)(topPage) @@(selector)(#myElement)">...</div> <!-- If no `topPage` dynamic element is present, the selector will be followed. If not, the selector will be ignored! -->
+<div _dynamic="@@(defineder)(topPage) @@(!selector)(#myElement)">...</div> <!-- The selector will be followed first here! If there is no match, the definder method will be followed after! -->
+```
+
+```html
+<div _dynamic="@@(!selector)(#myElement)">...</div>
+```
+
+This element will be inserted in the element with the ID "myElement". However, this is a strict selector, strict selector mean that this element will not be inserted into the page if not match is found! (Unless a definder method is present)
+
+```html
+<div _dynamic="@@(selector)(.myElement)">...</div>
+```
+
+This element will be inserted in the element with the class name "myElement". If no such element is found, it will be inserted at the bottom of the document.
+And if there is more than one matching result, it will be inserted into the bottom of the document. And if an index is specified, it will be inserted in that index (if it was present). (NOTE: if this was a strict selector, and no index was present/the specified index was out of range, the element will not be inserted!)
+
+To specify an index, you could do this:
+
+```html
+<div _dynamic="@@(selector)(.myElement)(0)">...</div>
+```
+
+You can also use the resource method!
+
+```html
+<div _dynamic="@@(resource)(<type>)">...</div>
+```
+
+resource will be inserted to the page according to the type!
+`Style` resources will be inserted in the `<head>` element, and Scripts will
+be inserted at the bottom of `<body>`.
+
+If a dynamic resource loads an already existing resource in the page, it will not be inserted!
+
+```html
+<element _dynamic="@@(!resource)(<type>)" />
+```
+
+If the resource is strict, it will replace the already loaded resource.
+
+Meta resources will be inserted at the top of the page! (Remember, meta data is not important in most of the use cases, so don't just add Meta tags randomly)
+
+```html
+<div _dynamic="@@(selector)(...) @@(resource)(...)">...</div> <!-- This is wrong! -->
+```
+
+Please note that you can't use the resource method with a selector method on the same element. Only the first method menthioned in the `_dynamic` attribute will be followed!
+
+```html
+<div _dynamic="...  @@(rule)(unload)">...</div>
+```
+
+Rules are, well, rules that the library will not break -no matter the condition-. The `unload` rule means that the specified dynamic element will be unloaded/removed once the page content changes.
+
+```html
+<div _dynamic="...  @@(rule)(constant)">...</div>
+```
+
+The `constant` rule means that once this dynamic element is loaded, it will never be removed! Even when a strict selector is trying to remove it!
+
+```html
+<div _dynamic="...  @@(rule)(flex)">...</div>
+```
+
+The `flex` rule means that once this dynamic element is loaded, it will be recognised as a flexible element! It will mostly behave like a normal element. But, when it gets replaced by another element, it will be saved for use later. Hhen another load attempt happens, the element that replaced this element will be replaced again by the flexible element!
 
 ## `forEach()`
 
@@ -175,196 +398,3 @@ This will replace strings on a global space in the Array! (It works like the nor
 ## `<String>.toDOMElement()`
 
 This will convert the specified string to a normal HTML element and return it.
-
-## The `dynamic` location object **(Not Ready Yet!)**
-
-You can use this object to change the loading behaviour of the page and the website! Dynamic loading is basically making it so the website never has to load the same resources all over again whenever you change the page. (You might know this kind of loading as Ajax loading)
-
-There are three protocols for the dynamic loading object:
-`"not-dynamic"`, `"dynamic"`, and `"fully-dynamic"`!
-
-The `"not-dynamic"` protocol is the default protocol used whenever you load the library! It means that dynamic loading is disabled by default.
-
-In the `"dynamic"` protocol, the page will load dynamically whenever the pathname changes - unless it contains search arguments in the URL, e.g. <https://example.com/?name=c> -. By default, it will follow the filtering process. You can prevent that by listening to the 'content-loaded' event and prevent the next step (It's not recommended that you do that, as EnderLibrary has a good enough automatic filtering system for most use cases):
-
-```js
-window.location.dynamic.on('content-loaded', function(e){ //This event is fired when the content of the targeted page is loaded (with no modifications)
-    e.preventInsert(); //This will prevent the library from inserting the content to the page
-    e.content; //You can do what you see more fitting with the content of the page!
-})
-```
-
-The `"fully-dynamic"` protocol doesn't care about the search arguments, it will always load dynamically! And links in the page itself will be automatically loaded dynamiclly when pressed, so you don't have to deal with them manually.
-
-However, you should always use the refresh function whenever you modify the DOM content of the page:
-
-```js
-window.location.dynamic.links.refresh(); //This function is applied automatically when the page content is inserted by the default loading process. But if you change the DOM content by yourself, new elements aren't effected by the current protocol unless you run this command.
-removeEventListener('click', window.location.dynamic.links._eventFunction); //If you wish to modify an element, you can use the _eventFunction variable to remove the eventListner that was set my the library!
-```
-
-You can change the protocol whenever you wish to do so, you can just change the value of the protocol variable:
-
-```js
-window.location.dynamic.protocol = "not-dynamic"; //Disable dynamic loading
-window.location.dynamic.protocol = "dynamic"; //Enable dynamic loading
-window.location.dynamic.protocol = "fully-dynamic"; //Enable full dynamic loading
-```
-
-You can change the page URL when the dynamic protocol is enabled just like this:
-
-```js
-window.location.dynamic.assign(url);
-/*or*/
-window.location.dynamic.href = url;
-
-window.location.dynamic.reload(); //You could also reload the page using this
-```
-
-If you wish to retrieve the value of the last url before switching to the dynamic protocol, you can use the `_href` variable:
-
-```js
-window.location.dynamic._href;
-window.location.dynamic._pathname;
-window.location.dynamic._search;
-window.location.dynamic._hash;
-```
-
-The search function only works with the `"fully-dynamic"` protocol:
-
-```js
-window.location.dynamic.search = "?name=value";
-window.location.hash = "hmm"; //There is no hash variable for the dynamic object, as the normal hash object is still 100% functional!
-```
-
-There are many events for the dynamic object:
-
-```js
-window.location.dynamic.on('protocol-change', function(){ //Fired when the dynamic protocol changes
-    //Your Code
-});
-window.location.dynamic.on('loading-start', function(e){ //Fired when a loading attempt is made
-    e.url; //The target URL
-    e.isReplacement; //Is this URL a replacement for the current URL history
-});
-window.location.dynamic.on('loading-end', function(){ //Fired when a loading process is finished successfully
-    //Your Code
-});
-window.location.dynamic.on('loading-failed', function(stageCode, error){ //Fired when a loading process fails
-    if(stageCode == -1){
-        //Failed at the targeting stage, probably because of a cross-domain or a security policy!
-    }else if(stageCode == 0){
-        //Failed when trying to load the page content, could be a problem with the connection!
-    }else if(stageCode == 1){
-        //Failed while trying to filter the page content!
-    }else if(stageCode == 2){
-        //Failed while trying to insert the page content!
-    }
-});
-window.location.dynamic.on('content-loaded', function(e){ //Fired when the content of the targeted page is loaded, but not yet filtered or inserted into the page!
-    e.content; //The content of hte page
-    e.preventInsert(); //A function to prevent the content from being inserted into the page
-    e.status; //The request status code
-    e.refresh(); //The links refresh function (window.location.dynamic.links.refresh)
-});
-```
-
-## The `_dynamic` Attribute **(Not Ready Yet!)**
-
-The `_dynamic` attribute is used in the default filtering process for the dynamic protocol. It can tell the library where each element belongs in the page!
-
-It will find already-existing elements in the page with the same value of the `_dynamic` attribute and replace them with the new element!
-
-```html
-<div _dynamic="topPage">...</div> <!-- The dynamic element with the value of topPage will be replaced with this element! -->
-```
-
-Of course, websites might need to do more things other than replacing an already existing element into the page!
-
-Dynamic elements that have not been assigned a type will be inserted at the bottom of the `<body>` element!
-
-The code used inside the `_dynamic` attribute follows this syntax system:
-
-```html
-<div _dynamic="@@(<method_name>)(<value>)(<additional_value>)... [@@(<...>)...]"></div>
-```
-
-The string between the opening and closing Parentheses is whitespace-sensitive, so be careful with it!
-
-```html
-<div _dynamic="@@(! selector)(.name)"></div> <!-- Wrong! -->
-<div _dynamic="@@( selector)(.name)"></div> <!-- Wrong! -->
-<div _dynamic="@@(!selector )(.name)"></div> <!-- Wrong! -->
-<div _dynamic="@@(selector)(.name)"></div> <!-- Right! -->
-```
-
-The dynamic attribute can also use selectors to tell the library where to insert this element. In case a selector returns an empty result, it will be inserted at the bottom of the document. (Unless it's a strict one!)
-
-```html
-<div _dynamic="@@(selector)(#myElement)">...</div>
-```
-
-This element will be inserted in the element with the ID "myElement". If no such element is found, it will be inserted at the bottom of the document.
-
-```html
-<div _dynamic="@@(!selector)(#myElement)">...</div>
-```
-
-This element will be inserted in the element with the ID "myElement". However, this is a strict selector, strict selector mean that this element will not be inserted into the page if not match is found!
-
-```html
-<div _dynamic="@@(selector)(.myElement)">...</div>
-```
-
-This element will be inserted in the element with the class name "myElement". If no such element is found, it will be inserted at the bottom of the document.
-And if there is more than one matching result, it will be inserted into the bottom of the document. And if an index is specified, it will be inserted in that index (if it was present). (NOTE: if this was a strict selector, and no index was present/the specified index was out of range, the element will not be inserted!)
-
-To specify an index, you could do this:
-
-```html
-<div _dynamic="@@(selector)(.myElement)(0)">...</div>
-```
-
-You can also use the resource method!
-
-```html
-<div _dynamic="@@(resource)(<type>)">...</div>
-```
-
-resource will be inserted to the page according to the type!
-`Style` resources will be inserted in the `<head>` element, and Scripts will
-be inserted at the bottom of `<body>`.
-
-If a dynamic resource loads an already existing resource in the page, it will not be inserted!
-
-```html
-<element _dynamic="@@(!resource)(<type>)" />
-```
-
-If the resource is strict, it will replace the already loaded resource.
-
-Meta resources will be inserted at the top of the page! (Remember, meta data is not important in most of the use cases, so don't just add Meta tags randomly)
-
-```html
-<div _dynamic="@@(selector)(...) @@(resource)(...)">...</div> <!-- This is wrong! -->
-```
-
-Please note that you can't use the resource method with a selector method on the same element. Only the first method menthioned in the `_dynamic` attribute will be followed!
-
-```html
-<div _dynamic="...  @@(rule)(unload)">...</div>
-```
-
-Rules are, well, rules that the library will not break -no matter the condition-. The `unload` rule means that the specified dynamic element will be unloaded/removed once the page content changes.
-
-```html
-<div _dynamic="...  @@(rule)(constant)">...</div>
-```
-
-The `constant` rule means that once this dynamic element is loaded, it will never be removed! Even when a strict selector is trying to remove it!
-
-```html
-<div _dynamic="...  @@(rule)(flex)">...</div>
-```
-
-The `flex` rule means that once this dynamic element is loaded, it will be recognised as a flexible element! It will mostly behave like a normal element. But, when it gets replaced by another element, it will be saved for use later. Hhen another load attempt happens, the element that replaced this element will be replaced again by the flexible element!
