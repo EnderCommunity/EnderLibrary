@@ -160,6 +160,14 @@ It will find already-existing elements in the page with the same value of the `_
 <div _dynamic="topPage">...</div> <!-- The dynamic element with the value of topPage will be replaced with this element! -->
 ```
 
+You can't have the `_` operator at the start of the value inside the `_dynamic` attribute! You can't also add a double `@` operator (`@@`) -unless you wanna specify a command-. These are the only limitations of this value. (You can add spaces, special charecters, etc.)
+
+```html
+<div _dynamic="_topPage">...</div> <!-- This is wrong, this may result in an error being thrown while inserting! -->
+<div _dynamic="topPage_">...</div> <!-- Nothing bad will happen here, you're good to go! -->
+<div _dynamic="top Page">...</div> <!-- Don't worry, spaces are allowed too! -->
+```
+
 Of course, websites might need to do more things other than replacing an already existing element into the page!
 
 Dynamic elements that have not been assigned a type will be inserted at the bottom of the `<body>` element!
