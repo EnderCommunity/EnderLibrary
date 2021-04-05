@@ -186,6 +186,7 @@
                                 preventInsert() {
                                     prevent.pDo(te);
                                 },
+                                url: new URL(xhr.responseURL),
                                 status: status,
                                 refresh: window.location.dynamic.links.refresh
                             });
@@ -280,9 +281,12 @@
                 //The 'constant' rule means that once this dynamic element is loaded, it will
                 //never be removed, even when a strict selector is trying to remove it!
 
-                content.getElementsByName("_dynamic").toArray().forEach(function(elm) { //_dynamic="[type]"
+                content.querySelectorAll("[_dynamic]").toArray().forEach(function(elm) { //_dynamic="[type]"
                     var tem = elm.getAttribute("_dynamic");
-                    tem = (tem == "") ? "_undefined" : tem;
+                    if (tem.replace(/\s/g, "").indexOf("@@") == 0)
+                        tem = "_withCommand";
+                    else
+                        tem = (tem == "") ? "_undefined" : tem;
                     if (temp[tem] == undefined)
                         temp[tem] = [];
                     temp[tem].push(elm.outerHTML);

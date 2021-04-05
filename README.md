@@ -133,7 +133,20 @@ window.location.dynamic.on('content-loaded', function(e){ //Fired when the conte
     e.content; //The content of hte page
     e.preventInsert(); //A function to prevent the content from being inserted into the page
     e.status; //The request status code
+    e.url; //The URL object of the page
     e.refresh(); //The links refresh function (window.location.dynamic.links.refresh)
+});
+```
+
+**Warning:** never use the dynamic protocol with pages that are too different from the current page! That would be so inefficient. You can, for example, do this to prevent such thing happening when you have the dynamic protocol enabled:
+
+```js
+window.location.dynamic.on('content-loaded', function(e) {
+    if (e.url.pathname.indexOf("/different") == 0) { //In this example, the way the page `/different` and its sub-pages are built is completely different from the way the current page is built and structured!
+        e.preventInsert();
+        window.location.href = e.url.href;
+    }
+    ...
 });
 ```
 
