@@ -335,7 +335,13 @@
                         elm[0].setAttribute(attr, content._attributes[elm[1]][attr]);
                     });
                 });
-                console.log(content);
+                for (var name in content) {
+                    if (name.indexOf("_") != 0) {
+                        console.log(content);
+                    } else {
+                        //
+                    }
+                }
                 //[END] Temp
             } catch (e) {
                 envi.fireEvent("loading-failed", 2, e);
