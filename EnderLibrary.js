@@ -336,10 +336,24 @@
                     });
                 });
                 for (var name in content) {
+                    //console.log(name);
+                    //console.log(content[name]);
                     if (name.indexOf("_") != 0) {
-                        console.log(content);
-                    } else {
-                        //
+                        //console.log(content[name]);
+                        document.querySelector(`[_dynamic="${name}"]`).outerHTML = content[name];
+                    } else if (name == "_withCommand") {
+                        try {
+                            content[name].forEach(function(elm) {
+                                elm = elm.toDOMElement();
+                                var data = envi.parse(elm.getAttribute("_dynamic"));
+                                //You need to start writing the logic of the commands!
+                                throw Error("Incomplete!");
+                            });
+                            delete data;
+                        } catch (e) {
+                            envi.message.error(e, "Dynamic Syntax Error");
+                        }
+                        //You need to use the command parser
                     }
                 }
                 //[END] Temp
@@ -664,6 +678,17 @@
     HTMLElement.prototype.getAllElements = function() {
         return this.querySelectorAll("*").toArray();
     };
+    HTMLElement.prototype.getTopLevelElements = function() {
+        var elms = this.getAllElements(),
+            _this = this,
+            _elms = [];
+        forEach(elms, function(elm) {
+            if (elm.parentElement == _this)
+                _elms.push(elm);
+        });
+        delete elms, _this;
+        return _elms;
+    };
     //[END] HTMLElement
 
     //[START] GlobalClassList
@@ -726,8 +751,8 @@
 
     //[START] String
     String.prototype.toDOMElement = function() {
-        var doc = (new DOMParser()).parseFromString(this, 'text/html');
-        var elements = doc.querySelectorAll('body *');
+        var doc = (new DOMParser()).parseFromString(this, 'text/html'),
+            elements = doc.body.getTopLevelElements();
         if (elements.length == 0) {
             return undefined;
         } else if (elements.length == 1) {
@@ -735,7 +760,6 @@
         } else {
             return elements;
         }
-        //return (new DOMParser()).parseFromString(string, 'text/html');
     };
     //[END] String
 
