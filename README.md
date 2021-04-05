@@ -58,7 +58,7 @@ In the `"dynamic"` protocol, the page will load dynamically whenever the pathnam
 ```js
 window.location.dynamic.on('content-loaded', function(e){ //This event is fired when the content of the targeted page is loaded (with no modifications)
     e.preventInsert(); //This will prevent the library from inserting the content to the page
-    e.content; //You can do what you see more fitting with the content of the page!
+    e.content; //You can do whatever you wanna do with the content of the page!
 })
 ```
 
