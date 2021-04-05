@@ -163,7 +163,7 @@ It will find already-existing elements in the page with the same value of the `_
 You can't have the `_` operator at the start of the value inside the `_dynamic` attribute! You can't also add a double `@` operator (`@@`) -unless you wanna specify a command-. These are the only limitations of this value. (You can add spaces, special charecters, etc.)
 
 ```html
-<div _dynamic="_topPage">...</div> <!-- This is wrong, this may result in an error being thrown while inserting! -->
+<div _dynamic="_topPage">...</div> <!-- This is wrong, this may result in an error being thrown while inserting the page content! -->
 <div _dynamic="topPage_">...</div> <!-- Nothing bad will happen here, you're good to go! -->
 <div _dynamic="top Page">...</div> <!-- Don't worry, spaces are allowed too! -->
 ```
@@ -404,6 +404,10 @@ This will set the `pointer-events` and `user-select` values to "auto", and will 
 ## `<element>.getAllElements()`
 
 This will return an array of all elements inside the specified parent element!
+
+## `<element>.getTopLevelElements()`
+
+This will return an array of all elements that are in the top level of the specified element! Top level elements are elements that are assigned the specified element as a parent.
 
 ## `<Object>.toArray()`
 
