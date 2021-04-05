@@ -138,7 +138,7 @@ window.location.dynamic.on('content-loaded', function(e){ //Fired when the conte
 });
 ```
 
-**Warning:** never use the dynamic protocol with pages that are too different from the current page! That would be so inefficient. You can, for example, do this to prevent such thing happening when you have the dynamic protocol enabled:
+**Warning:** never use the dynamic protocol with pages that are too different from the current page! That would be so inefficient. You can, for example, do this to prevent such a thing from happening when you have the dynamic protocol enabled:
 
 ```js
 window.location.dynamic.on('content-loaded', function(e) {
