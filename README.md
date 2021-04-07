@@ -421,6 +421,6 @@ This will empty the specified array!
 
 This will replace strings on a global space in the Array! (It works like the normal replace function, but it applys to all the members of the array)
 
-## `<String>.toDOMElement()`
+## `<String>.toHTMLElement()`
 
 This will convert the specified string to a normal HTML element and return it.

@@ -344,7 +344,7 @@
                     } else if (name == "_withCommand") {
                         try {
                             content[name].forEach(function(elm) {
-                                elm = elm.toDOMElement();
+                                elm = elm.toHTMLElement();
                                 var data = envi.parse(elm.getAttribute("_dynamic"));
                                 //You need to start writing the logic of the commands!
                                 throw Error("Incomplete!");
@@ -750,7 +750,7 @@
     //[END] Array
 
     //[START] String
-    String.prototype.toDOMElement = function() {
+    String.prototype.toHTMLElement = function() {
         var doc = (new DOMParser()).parseFromString(this, 'text/html'),
             elements = doc.body.getTopLevelElements();
         if (elements.length == 0) {
