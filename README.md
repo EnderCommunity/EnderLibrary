@@ -287,7 +287,7 @@ The `constant` rule means that once this dynamic element is loaded, it will neve
 <div _dynamic="...  @@(rule)(flex)">...</div>
 ```
 
-The `flex` rule means that once this dynamic element is loaded, it will be recognised as a flexible element! It will mostly behave like a normal element. But, when it gets replaced by another element, it will be saved for use later. Hhen another load attempt happens, the element that replaced this element will be replaced again by the flexible element!
+The `flex` rule means that once this dynamic element is loaded, it will be recognised as a flexible element! It will mostly behave like a normal element. But, when it gets replaced by another element, it will be saved for use later. When another load attempt happens, the element that replaced this element will be replaced again by the flexible element!
 
 ## `forEach()`
 
