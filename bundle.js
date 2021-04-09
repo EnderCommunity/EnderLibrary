@@ -1,5 +1,5 @@
 const querystring = require('querystring'),
-    topText = "/*! EnderLibrary v0.0.1 | (c) EnderLibrary */\n",
+    topText = "/*! EnderLibrary v0.0.2 | (c) EnderLibrary */\n",
     https = require('https'),
     fs = require('fs'),
     { EasyZip } = require('easy-zip'),

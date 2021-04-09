@@ -87,6 +87,12 @@
             for (var i = 0; i < code.length; i++)
                 code[i] = code[i].split(/\((.*?)\)/g).filter(v => v != "");
             return code;
+        },
+        dynamicProtocolData: {
+            defineded: {},
+            unload: [],
+            constant: [],
+            flex: []
         }
     };
 
@@ -336,18 +342,51 @@
                     });
                 });
                 for (var name in content) {
-                    //console.log(name);
-                    //console.log(content[name]);
-                    if (name.indexOf("_") != 0) {
-                        //console.log(content[name]);
-                        document.querySelector(`[_dynamic="${name}"]`).outerHTML = content[name];
+                    if (name.indexOf("_") != 0) { //Surely, there's gotta be a better way to do this...
+                        if (envi.dynamicProtocolData.defineded[name] != undefined) {
+                            envi.dynamicProtocolData.defineded[name]().outerHTML = content[name][0];
+                        } else if (document.querySelector(`[_dynamic=${name}]`) != null) {
+                            document.querySelector(`[_dynamic=${name}]`).outerHTML = content[name][0];
+                            const query = name;
+                            envi.dynamicProtocolData.defineded[name] = function() { return document.querySelector(`[_dynamic=${query}]`); };
+                        } else {
+                            var elm = document.body.insertElement(content[name][0]);
+                            const query = elm.getAttribute("_dynamic");
+                            envi.dynamicProtocolData.defineded[name] = function() { return document.querySelector(`[_dynamic=${query}]`); };
+                            delete elm;
+                        }
                     } else if (name == "_withCommand") {
                         try {
                             content[name].forEach(function(elm) {
                                 elm = elm.toHTMLElement();
                                 var data = envi.parse(elm.getAttribute("_dynamic"));
                                 //You need to start writing the logic of the commands!
-                                throw Error("Incomplete!");
+                                /*console.log("-------------------------------------");
+                                console.log(elm);
+                                console.log(data);
+                                console.log("-------------------------------------");*/
+                                data.forEach(function(dat) {
+                                    //console.log(dat);
+                                    let isStrict = false;
+                                    if (dat[0][0] == "!") {
+                                        isStrict = true;
+                                        dat[0] = dat[0].substring(1);
+                                    }
+                                    if (dat[0] == "defineder") { //Important
+                                        //console.log("DEFINEDER!");
+                                        //
+                                    } else if (dat[0] == "rule") {
+                                        //console.log("RULE!");
+                                        envi.dynamicProtocolData.defineded;
+                                        envi.dynamicProtocolData.unload;
+                                        envi.dynamicProtocolData.constant;
+                                        envi.dynamicProtocolData.flex;
+                                    } else if (dat[0] == "selector") {
+                                        //console.log("SELECTOR!");
+                                    } else {
+                                        envi.message.warn(`An unknown method has been found! (${dat[0]})`, "Dynamic Logic Error");
+                                    }
+                                });
                             });
                             delete data;
                         } catch (e) {
@@ -627,11 +666,27 @@
             envi.message.error("The element argument is missing!", "Input");
         } else if (typeof element.length !== "number") {
             !isFirst ? this.appendChild(element) : this.insertBefore(element, this.firstChild);
+            return element;
+        } else if (typeof element == "string") {
+            try {
+                element = element.toHTMLElement();
+                !isFirst ? this.appendChild(element) : this.insertBefore(element, this.firstChild);
+                return element;
+            } catch {
+                envi.message.error("The string passed does not include valid HTML data!", "Invalid Input");
+            }
         } else {
-            element.reverse();
-            element.forEach((elm) => {
-                !isFirst ? this.appendChild(elm) : this.insertBefore(elm, this.firstChild);
-            });
+            try {
+                element.reverse();
+                element.forEach((elm) => {
+                    if (typeof elm == "string")
+                        elm = elm.toHTMLElement();
+                    !isFirst ? this.appendChild(elm) : this.insertBefore(elm, this.firstChild);
+                });
+                return true;
+            } catch (e) {
+                envi.message.error("Something went wrong while inserting an array of elements, make sure all array members are of a valid type!", "Unknown Error")
+            }
         }
     };
     HTMLElement.prototype.insertCSS = function(code) {
@@ -751,14 +806,18 @@
 
     //[START] String
     String.prototype.toHTMLElement = function() {
-        var doc = (new DOMParser()).parseFromString(this, 'text/html'),
-            elements = doc.body.getTopLevelElements();
-        if (elements.length == 0) {
-            return undefined;
-        } else if (elements.length == 1) {
-            return elements[0];
-        } else {
-            return elements;
+        try {
+            var doc = (new DOMParser()).parseFromString(this, 'text/html'),
+                elements = doc.body.getTopLevelElements();
+            if (elements.length == 0) {
+                return undefined;
+            } else if (elements.length == 1) {
+                return elements[0];
+            } else {
+                return elements;
+            }
+        } catch (e) {
+            throw e;
         }
     };
     //[END] String
