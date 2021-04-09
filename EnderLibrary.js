@@ -192,7 +192,15 @@
                                 preventInsert() {
                                     prevent.pDo(te);
                                 },
-                                url: new URL(xhr.responseURL),
+                                url: (function() {
+                                    var temp;
+                                    try {
+                                        var temp = new URL(xhr.responseURL);
+                                    } catch (e) {
+                                        envi.fireEvent("loading-failed", 0, e);
+                                    }
+                                    return temp;
+                                })(),
                                 status: status,
                                 refresh: window.location.dynamic.links.refresh
                             });
