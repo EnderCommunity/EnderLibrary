@@ -201,7 +201,7 @@ The selector method works mostly like the `document.querySelectorAll()` method. 
 Note that everything written after the `@` operator will be used to select where you want to insert the element!
 
 ```html
-<div _dynamic="@@(selector)(body @.myElement .mine)"></div> <!-- "Put this element before the element with the class 'myElement', that has a child with the class 'mine'!" If no element -a one that has the class 'myElement' and has a child with the class 'mine'- is present, this selector will fail! -->
+<div _dynamic="@@(selector)(body @.myElement .mine)"></div> <!-- "Put this element before the element with the class 'myElement', that has a child with the class 'mine'!" If no element -one that has the class 'myElement' and has a child with the class 'mine'- is present, this selector will fail! -->
 ```
 
 ```html
