@@ -219,18 +219,18 @@ The dynamic attribute can also use selectors to tell the library where to insert
 
 This element will be inserted in the element with the ID "myElement". If no such element is found, it will be inserted at the bottom of the document.
 
-If you use a selector and a defineder in the same attribute, priority will be given to the definder method. If you want to prioritise the selector method, you need to use a strict selector:
+If you use a selector and a defineder in the same attribute, priority will be given to the defineder method. If you want to prioritise the selector method, you need to use a strict selector:
 
 ```html
 <div _dynamic="@@(defineder)(topPage) @@(selector)(#myElement)">...</div> <!-- If no `topPage` dynamic element is present, the selector will be followed. If not, the selector will be ignored! -->
-<div _dynamic="@@(defineder)(topPage) @@(!selector)(#myElement)">...</div> <!-- The selector will be followed first here! If there is no match, the definder method will be followed after! -->
+<div _dynamic="@@(defineder)(topPage) @@(!selector)(#myElement)">...</div> <!-- The selector will be followed first here! If there is no match, the defineder method will be followed after! -->
 ```
 
 ```html
 <div _dynamic="@@(!selector)(#myElement)">...</div>
 ```
 
-This element will be inserted in the element with the ID "myElement". However, this is a strict selector, strict selector mean that this element will not be inserted into the page if not match is found! (Unless a definder method is present)
+This element will be inserted in the element with the ID "myElement". However, this is a strict selector, strict selector mean that this element will not be inserted into the page if not match is found! (Unless a defineder method is present)
 
 ```html
 <div _dynamic="@@(selector)(.myElement)">...</div>
