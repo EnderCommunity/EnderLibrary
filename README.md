@@ -193,7 +193,7 @@ The selector method works mostly like the `document.querySelectorAll()` method. 
 ```html
 <div _dynamic="@@(selector)(body @top)"></div> <!-- "Put this element in the top section of the body element!" -->
 <div _dynamic="@@(selector)(body @bottom)"></div> <!-- "Put this element in the bottom section of the body element!" -->
-<div _dynamic="@@(selector)(body @0)"></div> <!-- "Put this element before the 2nd element in the body element (index 0, meaning that it should be the first element after it's inserted, this is the same as `@top`)" -->
+<div _dynamic="@@(selector)(body @0)"></div> <!-- "Put this element before the 1st element in the body element (index 0, meaning that it should be the first element after it's inserted, this is the same as `@top`)" -->
 <div _dynamic="@@(selector)(body @1)"></div> <!-- "Put this element before the 2nd element in the body element" -->
 <div _dynamic="@@(selector)(body @#myElement)"></div> <!-- "Put this element before the element with the id myElement" -->
 ```
