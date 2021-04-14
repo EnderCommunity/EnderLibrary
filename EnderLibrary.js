@@ -44,7 +44,15 @@
         message: {
             error: function(message, type) {
                 if (_EnderSettings.message.all && _EnderSettings.message.error)
-                    console.error(`%c[EnderLibrary] Error (${type}):`, 'font-weight: 900;', message); //Change this to an Error object
+                    try {
+                        throw new Error(message);
+                    } catch (e) {
+                        console.error("%c[EnderLibrary]", 'font-weight: 900;', `(${type})`, e.stack);
+                        //Write some code that analysis the stack variable, and only returns the
+                        //root cause of the error for a more clean text for the user to understand
+                        //the error without the need to go through the library code.
+                    }
+                    //console.error(`%c[EnderLibrary] Error (${type}):`, 'font-weight: 900;', message); //Change this to an Error object
             },
             warn: function(message, type) {
                 if (_EnderSettings.message.all && _EnderSettings.message.warn)
